@@ -5,55 +5,47 @@
   enableBPF,
   enableGdb,
   useRustForLinux,
-}: let
-  version = "6.1.4";
+}:
+let
+  version = "5.10.120";
   localVersion = "-development";
-in {
+in
+{
   kernelArgs = {
     inherit enableRust enableGdb;
 
     inherit version;
     src =
-      if useRustForLinux
-      then
+      if useRustForLinux then
         builtins.fetchurl {
           url = "https://github.com/Rust-for-Linux/linux/archive/bd123471269354fdd504b65b1f1fe5167cb555fc.tar.gz";
           sha256 = "sha256-BcTrK9tiGgCsmYaKpS/Xnj/nsCVGA2Aoa1AktHBgbB0=";
         }
       else
         pkgs.fetchurl {
-          url = "mirror://kernel/linux/kernel/v6.x/linux-${version}.tar.xz";
-          sha256 = "sha256-iqj2T6YLsTOBqWCNH++90FVeKnDECyx9BnGw1kqkVZ4=";
+          url = "mirror://kernel/linux/kernel/v5.x/linux-${version}.tar.xz";
+          sha256 = "sha256-W3p1YAQVjs4vXkF5W6Uj7CAXQ6c240zkHL4JF399Dos=";
         };
 
     # Add kernel patches here
-    kernelPatches = let
-      fetchSet = lib.imap1 (i: hash: {
-        # name = " "kbuild-v${builtins.toString i}";
-        patch = pkgs.fetchpatch {
-          inherit hash;
-          url = "https://lore.kernel.org/rust-for-linux/20230109204520.539080-${builtins.toString i}-ojeda@kernel.org/raw";
-        };
-      });
+    kernelPatches =
+      let
+        fetchSet = lib.imap1 (
+          i: hash: {
+            # name = " "kbuild-v${builtins.toString i}";
+            patch = pkgs.fetchpatch { inherit hash; };
+          }
+        );
 
-      patches = fetchSet [
-        "sha256-6WTde8P8GkDcBwVnlS6jws126vU7TCxF6/pLgFZE5gc="
-        "sha256-2RBeX5vFN88GVgRkzwK/7Gzl2iSWr4OqkdqoSgJPml0="
-        "sha256-oyR4traQbjq0+OMVL8q6UZicBh43TKN1BlhZsCTy7aU="
-        "sha256-2RBeX5vFN88GVgRkzwK/7Gzl2iSWr4OqkdqoSgJPml0="
-        "sha256-05VnWFMMar7YILTHVh9RLueRlW00pk3CjGKT7XDb7D0="
-        "sha256-qOZaHfZMc7Y2A0LdDJDO3Zi7QbdsBxZZoPmYKahkznw="
-      ];
-    in
+        patches = fetchSet [ ];
+      in
       patches;
 
     inherit localVersion;
-    modDirVersion = let
-      appendV =
-        if useRustForLinux
-        then ".0-rc1"
-        else "";
-    in
+    modDirVersion =
+      let
+        appendV = if useRustForLinux then ".0-rc1" else "";
+      in
       version + appendV + localVersion;
   };
 
@@ -61,16 +53,40 @@ in {
     inherit enableRust;
 
     # See https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/system/boot/kernel_config.nix
-    structuredExtraConfig = with lib.kernel;
+    structuredExtraConfig =
+      with lib.kernel;
       {
+
         DEBUG_FS = yes;
         DEBUG_KERNEL = yes;
         DEBUG_MISC = yes;
-        DEBUG_BUGVERBOSE = yes;
+        #DEBUG_BUGVERBOSE = yes;
         DEBUG_BOOT_PARAMS = yes;
         DEBUG_STACK_USAGE = yes;
         DEBUG_SHIRQ = yes;
         DEBUG_ATOMIC_SLEEP = yes;
+
+        # Config options for NXP WLAN driver build
+        MMC = yes;
+        #MMC_BLOCK = module;
+        PCI = yes;
+        NET = yes;
+        INET = yes;
+        NETDEVICES = yes;
+        WIRELESS = yes;
+        CFG80211 = yes;
+        CFG80211_WEXT = yes;
+        HOSTAP = yes;
+        MAC80211 = yes;
+        IPV6 = module;
+
+        BT = yes;
+        BT_RFCOMM = yes;
+        BT_RFCOMM_TTY = yes;
+        BT_BNEP = yes;
+        BT_BNEP_MC_FILTER = yes;
+        BT_BNEP_PROTO_FILTER = yes;
+        BT_HIDP = yes;
 
         IKCONFIG = yes;
         IKCONFIG_PROC = yes;
