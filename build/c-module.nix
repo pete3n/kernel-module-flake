@@ -1,16 +1,24 @@
+{ stdenv, nukeReferences }:
+{ kernel }:
 {
-  stdenv,
-  nukeReferences,
-}: {kernel}: {
   name,
   src,
   dontStrip ? false,
+  buildPhase ? null,
 }:
+let
+  optionalString = cond: str: if cond then str else "";
+in
 stdenv.mkDerivation {
   KERNEL = kernel.dev;
   KERNEL_VERSION = kernel.modDirVersion;
-  buildInputs = [nukeReferences kernel.dev];
+  buildInputs = [
+    nukeReferences
+    kernel.dev
+  ];
   inherit name src dontStrip;
+
+  buildPhase = optionalString (buildPhase != null) buildPhase;
 
   installPhase = ''
     mkdir -p $out/lib/modules/$KERNEL_VERSION/misc
@@ -20,5 +28,5 @@ stdenv.mkDerivation {
     done
   '';
 
-  meta.platforms = ["x86_64-linux"];
+  meta.platforms = [ "x86_64-linux" ];
 }

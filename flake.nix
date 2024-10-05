@@ -61,7 +61,10 @@
       buildRustModule = buildLib.buildRustModule { inherit kernel; };
       buildCModule = buildLib.buildCModule { inherit kernel; };
 
-      modules = [ cModule ] ++ pkgs.lib.optional enableRust rustModule;
+      modules = [
+        cModule
+        nxpModule
+      ] ++ pkgs.lib.optional enableRust rustModule;
 
       initramfs = buildLib.buildInitramfs {
         inherit kernel modules;
@@ -89,6 +92,17 @@
       cModule = buildCModule {
         name = "helloworld";
         src = ./modules/helloworld;
+      };
+
+      nxpModule = buildCModule {
+        name = "nxpModule";
+        src = ./modules/nxp;
+        buildPhase = ''
+          export KERNELDIR=${kernel.dev}/lib/modules/${kernelArgs.version}-development/build/
+          export ARCH=x86_64
+          export CROSS_COMPILE=""
+          make KERNELDIR=$KERNELDIR CROSS_COMPILE=$CROSS_COMPILE ARCH=$ARCH
+        '';
       };
 
       rustModule = buildRustModule {
