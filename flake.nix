@@ -188,6 +188,7 @@
           kernel
           cModule
           ebpf-stacktrace
+          nxpModule
           rustModule
           genRustAnalyzer
           ;
